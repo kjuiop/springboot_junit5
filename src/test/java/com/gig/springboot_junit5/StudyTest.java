@@ -23,11 +23,14 @@ import static org.junit.jupiter.api.Assumptions.assumingThat;
 @DisplayNameGeneration(DisplayNameGenerator.ReplaceUnderscores.class)
 class StudyTest {
 
+
+
     @Test
     @DisplayName("조건에 따라 실행되는 테스트")
     @EnabledOnOs({OS.MAC, OS.LINUX})
     @EnabledOnJre({JRE.JAVA_8, JRE.JAVA_11})
-    @EnabledIfEnvironmentVariable(named = "TEST_ENV", matches = "local")
+//    @EnabledIfEnvironmentVariable(named = "TEST_ENV", matches = "local")
+    @Disabled
     void test_by_condition() {
         String testEnv = System.getenv("TEST_ENV");
 
@@ -48,6 +51,7 @@ class StudyTest {
     @Test
     @DisplayName("조건에 따라 실행되지않는 테스트")
     @DisabledOnOs({OS.MAC, OS.LINUX})
+    @Disabled
     void test_by_condition_disabled() {
         String testEnv = System.getenv("TEST_ENV");
 
@@ -62,10 +66,10 @@ class StudyTest {
         });
     }
 
-    @Test
     @DisplayName("스터디 만들기")
+    @StudyCrudTest
     void create_new_study() {
-        Study study = new Study(StudyStatus.ENDED, -10);
+        Study study = new Study(StudyStatus.DRAFT, 10);
         assertNotNull(study);
         // 기대하는 값, 실제 값, 테스트 오류 메시지
         // assertEquals(StudyStatus.ENDED, study.getStudyStatus(), "스터디를 처음 만들면 상태값이 DRAFT이어야 한다.");
@@ -97,16 +101,16 @@ class StudyTest {
         assertNotNull(study);
     }
 
-    @Test
     @DisplayName("스터디 오류 테스트")
+    @StudyCrudTest
     void create1_study_exception() {
         IllegalArgumentException exception = assertThrows(IllegalArgumentException.class, () -> new Study(-10));
         String message = exception.getMessage();
         assertEquals("limit는 0보다 커야 한다.", exception.getMessage());
     }
 
-    @Test
     @DisplayName("스터디 타임아웃 테스트")
+    @TimeOutTest
     void create1_study_timeout() {
         // 단점
         // 실제 쓰레드의 시간을 모두 기다린 후 걸린 시간과 비교해서 테스트 결과를 내기 때문에
@@ -121,7 +125,7 @@ class StudyTest {
         // 이 테스트 구문은 시간이 초과되면 바로 종료된다.
         assertTimeoutPreemptively(Duration.ofMillis(100), () -> {
             new Study(10);
-            Thread.sleep(300);
+            Thread.sleep(10);
         });
 
         // Thread Local 을 사용하는 소스가 있으면 예상치 못한 결과가 나올 수 있다.
@@ -132,8 +136,8 @@ class StudyTest {
         // 따라서 assertTimeout 이 더 안정적이다.
     }
 
-    @Test
     @DisplayName("스터디 만들기 테스트 assertThat")
+    @StudyCrudTest
     void create_study_assertThat() {
         Study actual = new Study(10);
         assertThat(actual.getLimit()).isGreaterThan(0);
