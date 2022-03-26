@@ -4,12 +4,16 @@ import com.gig.springboot_junit5.entity.Study;
 import com.gig.springboot_junit5.entity.type.StudyStatus;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.*;
+import org.junit.jupiter.api.condition.*;
 
 import java.time.Duration;
 import java.util.function.Supplier;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.*;
+
+import static org.junit.jupiter.api.Assumptions.assumeTrue;
+import static org.junit.jupiter.api.Assumptions.assumingThat;
 
 /**
  * @author : JAKE
@@ -18,6 +22,45 @@ import static org.junit.jupiter.api.Assertions.*;
 @Slf4j
 @DisplayNameGeneration(DisplayNameGenerator.ReplaceUnderscores.class)
 class StudyTest {
+
+    @Test
+    @DisplayName("조건에 따라 실행되는 테스트")
+    @EnabledOnOs({OS.MAC, OS.LINUX})
+    @EnabledOnJre({JRE.JAVA_8, JRE.JAVA_11})
+    @EnabledIfEnvironmentVariable(named = "TEST_ENV", matches = "local")
+    void test_by_condition() {
+        String testEnv = System.getenv("TEST_ENV");
+
+        // assumeTrue 를 사용하면, 해당 조건에 부합되지 않으면 밑의 소스는 실행 불가
+        // assumeTrue("LOCAL".equalsIgnoreCase(testEnv));
+
+        assumingThat("LOCAL".equalsIgnoreCase(testEnv), () ->  {
+            Study actual = new Study(100);
+            assertThat(actual.getLimit()).isGreaterThan(0);
+        });
+
+        assumingThat("DEV".equalsIgnoreCase(testEnv), () ->  {
+            Study actual = new Study(10);
+            assertThat(actual.getLimit()).isGreaterThan(0);
+        });
+    }
+
+    @Test
+    @DisplayName("조건에 따라 실행되지않는 테스트")
+    @DisabledOnOs({OS.MAC, OS.LINUX})
+    void test_by_condition_disabled() {
+        String testEnv = System.getenv("TEST_ENV");
+
+        assumingThat("LOCAL".equalsIgnoreCase(testEnv), () ->  {
+            Study actual = new Study(100);
+            assertThat(actual.getLimit()).isGreaterThan(0);
+        });
+
+        assumingThat("DEV".equalsIgnoreCase(testEnv), () ->  {
+            Study actual = new Study(10);
+            assertThat(actual.getLimit()).isGreaterThan(0);
+        });
+    }
 
     @Test
     @DisplayName("스터디 만들기")
@@ -95,7 +138,6 @@ class StudyTest {
         Study actual = new Study(10);
         assertThat(actual.getLimit()).isGreaterThan(0);
     }
-
 
     @BeforeAll
     static void beforeAll() {
