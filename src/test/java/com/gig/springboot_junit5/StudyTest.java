@@ -5,7 +5,9 @@ import com.gig.springboot_junit5.entity.type.StudyStatus;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.*;
 import org.junit.jupiter.api.condition.*;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.api.extension.ParameterContext;
+import org.junit.jupiter.api.extension.RegisterExtension;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.aggregator.AggregateWith;
 import org.junit.jupiter.params.aggregator.ArgumentsAccessor;
@@ -15,6 +17,7 @@ import org.junit.jupiter.params.converter.ArgumentConversionException;
 import org.junit.jupiter.params.converter.ConvertWith;
 import org.junit.jupiter.params.converter.SimpleArgumentConverter;
 import org.junit.jupiter.params.provider.*;
+import org.mockito.internal.matchers.Find;
 
 import java.time.Duration;
 import java.util.function.Supplier;
@@ -30,9 +33,23 @@ import static org.junit.jupiter.api.Assumptions.assumingThat;
  * @date : 2022/03/19
  */
 @Slf4j
-@DisplayNameGeneration(DisplayNameGenerator.ReplaceUnderscores.class)
+// properties 에서 선언 가능
+// @DisplayNameGeneration(DisplayNameGenerator.ReplaceUnderscores.class)
+
+// 클래스마다 하나의 인스턴스를 공유한다.
+// beforeAll 이 static 으로 선언되지 않아도 사용할 수 있다.
+// @TestInstance(TestInstance.Lifecycle.PER_CLASS)
+
+// 확장테스트 클래스를 쓸 때 클래스 단위로 선언하여 사용한다.
+// @ExtendWith(FindSlowTestExtension.class)
+@TestMethodOrder(MethodOrderer.OrderAnnotation.class)
 class StudyTest {
 
+    // 각 클래스 단위별로 파라미터를 다르게 넣어줄 수 있다.
+    @RegisterExtension
+    static FindSlowTestExtension findSlowTestExtension = new FindSlowTestExtension(1000L);
+
+    @Order(3)
     @DisplayName("반복 테스트")
     @RepeatedTest(value = 10, name = "{displayName}, {currentRepetition}, {totalRepetitions}")
     void repeatTest(RepetitionInfo repetitionInfo) {
@@ -40,6 +57,7 @@ class StudyTest {
                 repetitionInfo.getTotalRepetitions());
     }
 
+    @Order(2)
     @DisplayName("파라미터 반복 테스트")
     @ParameterizedTest(name = "{index} {displayName} message={0}")
     @ValueSource(strings = {"날씨가", "많이", "추워지고", "있네요"})
@@ -50,6 +68,7 @@ class StudyTest {
         System.out.println(message);
     }
 
+    @Order(0)
     @DisplayName("파라미터 반복 테스트 Csv")
     @ParameterizedTest(name = "{index} {displayName} message={0}")
     @ValueSource(ints = {10, 20, 40})
@@ -66,6 +85,7 @@ class StudyTest {
         }
     }
 
+    @Order(1)
     @DisplayName("파라미터 반복 테스트 Csv")
     @ParameterizedTest(name = "{index} {displayName} message={0}")
     @CsvSource({"10, '자바 스터디'", "20, 스프링"})
